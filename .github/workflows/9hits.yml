@@ -1,0 +1,16 @@
+name: 9hits_ninja
+
+on: 
+  schedule:
+    - cron:  '*/5 * * * *'
+    
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Initializing Setup
+      run: ./setup.ps1
+    - name: Keep Alive
+      run: ./timeout.ps1
