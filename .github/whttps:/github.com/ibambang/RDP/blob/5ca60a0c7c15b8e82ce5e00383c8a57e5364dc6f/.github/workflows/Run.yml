@@ -1,0 +1,89 @@
+name: RUN_RDP
+
+on: workflow_dispatch
+
+jobs:
+
+  build:
+
+    runs-on: windows-latest
+
+    timeout-minutes: 9999
+
+    steps:
+
+    - name: Download NGROK - NSSM.
+
+      run: |
+
+        Invoke-WebRequest https://raw.githubusercontent.com/TheDarkMythos/Ngrok-Exe/master/ngrok.exe -OutFile ngrok.exe
+
+        Invoke-WebRequest https://raw.githubusercontent.com/cudsav/WindowsRDP/main/Files/nssm.exe -OutFile nssm.exe
+
+        
+
+    - name: Copy NGROK - NSSM to System32.
+
+      run: | 
+
+        copy nssm.exe C:\Windows\System32
+
+        copy ngrok.exe C:\Windows\System32
+
+        
+
+    - name: Connect to NGROK account use NGROK_AUTH_TOKEN.
+
+      run: .\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
+
+      env:
+
+        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+
+        
+
+    - name: Download BATCH NGROK_AP - NGROK_CHECK - NGROK_LOOP.
+
+      run: |
+
+        Invoke-WebRequest https://raw.githubusercontent.com/cudsav/WindowsRDP/main/Files/NGROK_AP.bat -OutFile NGROK_AP.bat
+
+        Invoke-WebRequest https://raw.githubusercontent.com/cudsav/WindowsRDP/main/Files/NGROK_CHECK.bat -OutFile NGROK_CHECK.bat
+
+        Invoke-WebRequest https://raw.githubusercontent.com/cudsav/WindowsRDP/main/Files/NGROK_LOOP.bat -OutFile NGROK_LOOP.bat
+
+        
+
+    - name: Create a NGROK .yml file.
+
+      run: start NGROK_AP.bat
+
+      
+
+    - name: Turn on RDP connection.
+
+      run: | 
+
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -name "fDenyTSConnections" -Value 0
+
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
+
+        
+
+    - name: Create NGROK connection.
+
+      run: sc start ngrok
+
+      
+
+    - name: Run connection.
+
+      run: cmd /c NGROK_CHECK.bat
+
+      
+
+    - name: Success! You can run VPS use this informations.
+
+      run: cmd /c NGROK_LOOP.bat
